@@ -1,0 +1,35 @@
+{
+  "name": "disposabl-desktop",
+  "private": true,
+  "scripts": {
+    "dev": "bun run --filter @disposabl/desktop dev",
+    "build": "bun run --filter @disposabl/desktop build",
+    "package": "bun run --filter @disposabl/desktop package",
+    "test": "bun test",
+    "test:smoke": "bun run --filter @disposabl/desktop test:smoke",
+    "check": "bun check .",
+    "fmt": "bun fmt",
+    "lint": "bun lint",
+    "validate": "bun run lint --fix --max-warnings 0 && bun run fmt && bun run check",
+    "validate:check": "bun run lint --max-warnings 0 && bun run fmt --check && bun run check"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devEngines": {
+    "packageManager": {
+      "name": "bun",
+      "version": "1.4.4-canary.1",
+      "onFail": "warn"
+    }
+  },
+  "devDependencies": {
+    "@disposabl/typescript-config": "workspace:*",
+    "@types/bun": "1.4.3",
+    "typescript": "7.0.2"
+  },
+  "trustedDependencies": [
+    "electron"
+  ]
+}

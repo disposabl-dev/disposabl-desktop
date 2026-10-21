@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; base-uri 'none'; form-action 'none'"
+    />
+    <title>Disposabl Desktop</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="renderer.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">DISPOSABL / DESKTOP</p>
+      <h1>Hello, desktop.</h1>
+      <p>A small Electron app. Built with Bun.</p>
+      <section aria-label="Counter">
+        <output id="count" aria-label="Count" aria-live="polite">0</output>
+        <div class="actions">
+          <button id="increment" type="button">Increment</button>
+          <button id="reset" type="button">Reset</button>
+        </div>
+      </section>
+      <footer>Electron runtime · Bun tooling · TypeScript</footer>
+    </main>
+  </body>
+</html>

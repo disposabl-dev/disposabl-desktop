@@ -1,0 +1,124 @@
+name: Desktop
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-x64
+            runner: windows-2025
+            flags: --win --x64
+            executable: release/win-unpacked/Disposabl Desktop.exe
+          - platform: macos-arm64
+            runner: macos-15
+            flags: --mac --arm64
+            executable: release/mac-arm64/Disposabl Desktop.app/Contents/MacOS/Disposabl Desktop
+          - platform: ubuntu-x64
+            runner: ubuntu-24.04
+            flags: --linux --x64
+            executable: release/linux-unpacked/disposabl-desktop
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: canary
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Check types, lint, and formatting
+        run: bun run validate:check
+      - name: Unit tests
+        run: bun run test
+      - name: Build installers
+        working-directory: apps/desktop
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: bun run package ${{ matrix.flags }} -c.extraMetadata.version=0.1.${{ github.run_number }}
+      - name: Smoke test the packaged app
+        if: runner.os != 'Linux'
+        working-directory: apps/desktop
+        env:
+          APP_EXECUTABLE: ${{ matrix.executable }}
+        run: bun run test:smoke
+      - name: Smoke test the packaged app on Ubuntu
+        if: runner.os == 'Linux'
+        working-directory: apps/desktop
+        env:
+          APP_EXECUTABLE: ${{ matrix.executable }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgtk-3-0t64 libnss3 libasound2t64
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          xvfb-run --auto-servernum bun run test:smoke
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: screenshot-${{ matrix.platform }}
+          path: apps/desktop/test-results/*.png
+          if-no-files-found: warn
+      - name: Upload installers
+        uses: actions/upload-artifact@v6
+        with:
+          name: installers-${{ matrix.platform }}
+          if-no-files-found: error
+          path: |
+            apps/desktop/release/*.exe
+            apps/desktop/release/*.dmg
+            apps/desktop/release/*.AppImage
+            apps/desktop/release/*.deb
+
+  release:
+    name: Publish release
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: installers-*
+          path: installers
+          merge-multiple: true
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: v0.1.${{ github.run_number }}
+          RELEASE_COMMIT: ${{ github.sha }}
+        run: |
+          cd installers
+          sha256sum *.exe *.dmg *.AppImage *.deb > SHA256SUMS.txt
+          cat > ../release-notes.md <<'EOF'
+          Minimal Electron app built with Bun canary.
+
+          Downloads: Windows x64 installer, Apple Silicon DMG, Ubuntu x64 AppImage and Debian package.
+
+          These builds are unsigned and the macOS build is not notarized. Windows SmartScreen and macOS Gatekeeper may require approval before opening the app.
+          EOF
+          if ! gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --target "$RELEASE_COMMIT" --title "$RELEASE_TAG" --notes-file ../release-notes.md --generate-notes --draft
+          fi
+          gh release upload "$RELEASE_TAG" ./*.exe ./*.dmg ./*.AppImage ./*.deb SHA256SUMS.txt --clobber
+          gh release edit "$RELEASE_TAG" --draft=false --latest

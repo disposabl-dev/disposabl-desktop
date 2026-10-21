@@ -1,0 +1,85 @@
+{
+  "name": "@disposabl/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A minimal Electron app built and checked with Bun.",
+  "author": "Disposabl",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/disposabl-dev/disposabl-desktop.git"
+  },
+  "main": "dist/main.cjs",
+  "scripts": {
+    "dev": "bun run build && ELECTRON_RUN_AS_NODE= electron .",
+    "build": "bun run scripts/build.ts",
+    "package": "bun run build && electron-builder --publish never",
+    "test": "bun test",
+    "test:smoke": "node scripts/smoke.mjs",
+    "check": "bun check ."
+  },
+  "devDependencies": {
+    "@disposabl/typescript-config": "workspace:*",
+    "@types/bun": "1.4.3",
+    "electron": "45.0.0",
+    "electron-builder": "26.15.3",
+    "playwright-core": "1.64.1"
+  },
+  "trustedDependencies": [
+    "electron"
+  ],
+  "build": {
+    "appId": "dev.disposabl.desktop",
+    "productName": "Disposabl Desktop",
+    "artifactName": "disposabl-desktop-${version}-${os}-${arch}.${ext}",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*"
+    ],
+    "asar": true,
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.developer-tools",
+      "identity": null
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "signAndEditExecutable": false
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Development",
+      "executableName": "disposabl-desktop",
+      "maintainer": "Disposabl"
+    }
+  }
+}

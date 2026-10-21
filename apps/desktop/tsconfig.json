@@ -1,0 +1,6 @@
+{
+  "extends": "@disposabl/typescript-config/bun.json",
+  "compilerOptions": { "lib": ["ESNext", "DOM", "DOM.Iterable"] },
+  "include": ["src/**/*.ts", "scripts/**/*.ts"],
+  "exclude": ["node_modules", "dist", "release"]
+}
