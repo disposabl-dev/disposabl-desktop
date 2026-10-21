@@ -13,7 +13,8 @@
   "scripts": {
     "dev": "bun run build && ELECTRON_RUN_AS_NODE= electron .",
     "build": "bun run scripts/build.ts",
-    "package": "bun run build && electron-builder --publish never",
+    "package": "bun run build && bun run package:bundle",
+    "package:bundle": "electron-builder --publish never",
     "test": "bun test",
     "test:smoke": "node scripts/smoke.mjs",
     "check": "bun check ."
@@ -61,6 +62,9 @@
         }
       ],
       "signAndEditExecutable": false
+    },
+    "deb": {
+      "compression": "zst"
     },
     "linux": {
       "target": [

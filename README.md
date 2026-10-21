@@ -44,8 +44,7 @@ context isolation, and no Node integration. No preload bridge is needed.
 Copy `apps/desktop` into the starter kit's `apps/desktop`, then run `bun install`
 from its root. Its existing `apps/*` workspace and
 `@disposabl/typescript-config` package already match this app. Keep the starter
-kit's root config and lockfile. The app declares its dependencies and trusts
-Electron's install script locally.
+kit's root config and lockfile. The app declares its own development dependencies.
 
 ```sh
 bun run --filter @disposabl/desktop dev
@@ -61,8 +60,9 @@ root validation commands must pass for the whole starter kit before release.
 [GitHub Actions](https://github.com/disposabl-dev/disposabl-desktop/actions) uses
 `oven-sh/setup-bun` with `bun-version: canary` on every platform.
 
-Pull requests to `main` and pushes to `main` run checks, unit tests, packaging,
-and a smoke test of each packaged app in parallel:
+Pull requests to `main` and pushes to `main` first run type checks, lint,
+formatting, unit tests, and Bun bundling once on Ubuntu. That small, portable
+bundle is uploaded and reused by three native packaging jobs running in parallel:
 
 - Windows x64 on `windows-2025`, producing an NSIS `.exe` installer.
 - Apple Silicon only on `macos-15`, producing an arm64 `.dmg`.
@@ -70,6 +70,14 @@ and a smoke test of each packaged app in parallel:
 
 Each job saves a screenshot of the app after clicking Increment. Ubuntu uses
 Xvfb for its display. A manual workflow run checks and builds without releasing.
+
+Native jobs install only the desktop workspace's tooling. They cache Bun's
+package downloads, Electron archives, and electron-builder tools separately for
+each OS and architecture. They package the shared bundle using
+`package:bundle`, so they do not rerun checks, tests, or compilation. A fresh
+runner still needs to link its own platform-specific tools; `node_modules`
+is not transferred between operating systems. Debian packages use Zstandard
+compression, and artifact upload skips recompressing finished installers.
 
 After all three jobs pass on a push to `main`, the workflow publishes a
 [GitHub release](https://github.com/disposabl-dev/disposabl-desktop/releases)
