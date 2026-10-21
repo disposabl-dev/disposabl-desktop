@@ -101,11 +101,15 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
         run: bun run package:bundle ${{ matrix.flags }} "-c.extraMetadata.version=0.1.${{ github.run_number }}"
       - name: Smoke test the packaged app
-        if: runner.os != 'Linux'
+        if: runner.os == 'Windows'
         working-directory: apps/desktop
         env:
           APP_EXECUTABLE: ${{ matrix.executable }}
         run: bun run test:smoke
+      - name: Verify macOS DMG, app signature, and launch
+        if: runner.os == 'macOS'
+        working-directory: apps/desktop
+        run: bash scripts/test-macos-dmg.sh release/*.dmg
       - name: Smoke test the packaged app on Ubuntu
         if: runner.os == 'Linux'
         working-directory: apps/desktop
@@ -160,7 +164,7 @@ jobs:
 
           Downloads: Windows x64 installer, Apple Silicon DMG, Ubuntu x64 AppImage and Debian package.
 
-          These builds are unsigned and the macOS build is not notarized. Windows SmartScreen and macOS Gatekeeper may require approval before opening the app.
+          The macOS app has an ad-hoc signature verified after copying it from the DMG. It is not Apple Developer ID signed or notarized. macOS Gatekeeper still requires approval in System Settings > Privacy & Security > Open Anyway. Windows builds are unsigned and SmartScreen may show a warning.
           EOF
           if ! gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
             gh release create "$RELEASE_TAG" --target "$RELEASE_COMMIT" --title "$RELEASE_TAG" --notes-file ../release-notes.md --generate-notes --draft

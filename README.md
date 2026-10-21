@@ -86,9 +86,21 @@ push event. Versions use `0.1.<workflow run number>` so direct pushes also get
 unique versions without a version-bump commit or tag from a developer.
 Rerunning the same workflow updates that release's assets.
 
-Builds are unsigned. The macOS app is not notarized, so Gatekeeper may block it;
-Windows SmartScreen may also show a warning. Signing credentials are not
-required by this starter. Automatic in-app updates are not included.
+The macOS app is ad-hoc signed. CI verifies the DMG, copies the app out of it,
+checks the complete bundle signature, and launches that copy for the smoke test.
+This checks for broken bundle signatures, which macOS can report as "damaged".
+
+Ad-hoc signing does not identify a trusted publisher. The app is not Developer ID
+signed or notarized, so macOS Gatekeeper can still block a downloaded copy. For
+this development build, drag the app from the DMG into Applications, try opening
+it, then use System Settings > Privacy & Security > Open Anyway to approve it.
+If that option is unavailable, do not disable Gatekeeper globally. A release that
+passes Gatekeeper without a manual exception requires Apple Developer ID signing
+and notarization.
+
+Windows builds are unsigned and SmartScreen may show a warning. Signing
+credentials are not required by this starter. Automatic in-app updates are not
+included.
 
 ## License
 

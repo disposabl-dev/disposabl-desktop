@@ -50,7 +50,10 @@
         }
       ],
       "category": "public.app-category.developer-tools",
-      "identity": null
+      "identity": "-",
+      "hardenedRuntime": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
     },
     "win": {
       "target": [
